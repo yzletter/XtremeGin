@@ -17,7 +17,7 @@ type RedisSlideWindowLimiter struct {
 	rate     int           // rate 阈值
 }
 
-// NewRedisSlideWindowLimiter 构造函数: 需要传入一个 RedisClient 缓存、窗口大小、阈值 ——> 表示 interval 时间内最多通过 rate 个 IP
+// NewRedisSlideWindowLimiter 构造函数: 需要传入一个 RedisClient 缓存、窗口大小、阈值 ——> 表示 interval 时间内该 IP 最多通过 rate 个请求
 func NewRedisSlideWindowLimiter(cmd redis.Cmdable, interval time.Duration, rate int) *RedisSlideWindowLimiter {
 	return &RedisSlideWindowLimiter{
 		cmd:      cmd,

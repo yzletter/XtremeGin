@@ -1,5 +1,4 @@
-module XtremeGin
-//module github.com/yzletter/XtremeGin
+module github.com/yzletter/XtremeGin
 
 go 1.24
 
