@@ -21,15 +21,11 @@ func NewRateLimitBuilder(limiter limiter.Limiter) *RateLimitBuilder {
 	}
 }
 
-// UpdatePrefix 修改 builder 的 prefix
-func (builder *RateLimitBuilder) UpdatePrefix(prefix string) {
-	builder.prefix = prefix
-}
-
 // Build 返回 Gin 框架中用于注册的 HandlerFunc 中间件
 func (builder *RateLimitBuilder) Build() gin.HandlerFunc {
 	// 要返回的 HandlerFunc
 	var rateLimitGinHandlerFunc func(ctx *gin.Context)
+
 	rateLimitGinHandlerFunc =
 		func(ctx *gin.Context) {
 			ifLimited, err := builder.limit(ctx)
@@ -57,4 +53,9 @@ func (builder *RateLimitBuilder) limit(ctx *gin.Context) (bool, error) {
 	redisKey := fmt.Sprintf("%s:%s", builder.prefix, ctx.ClientIP()) // prefix + IP 构成 Redis 中的 key
 
 	return builder.limiter.Limit(ctx, redisKey)
+}
+
+// UpdatePrefix 修改 builder 的 prefix
+func (builder *RateLimitBuilder) UpdatePrefix(prefix string) {
+	builder.prefix = prefix
 }

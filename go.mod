@@ -5,6 +5,7 @@ go 1.24
 require (
 	github.com/gin-gonic/gin v1.10.0
 	github.com/redis/go-redis/v9 v9.7.3
+	github.com/yzletter/go-kit v1.0.2
 )
 
 require (

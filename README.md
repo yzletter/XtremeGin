@@ -3,6 +3,7 @@
 Gin 中间件库
 
 - 限流模块
+- JWT 模块
 
 ## 限流模块
 博客地址：[限流模块设计与实现](https://yzletter.notion.site/Gin-Redis-1df89200bcae80b4802dfe20582bda46)
@@ -33,3 +34,8 @@ func main() {
 }
 ```
 
+
+
+## JWT 模块
+
+博客地址：[JWT 模块设计与实现](https://yzletter.notion.site/JWT-Token-1ec89200bcae80acb735e0fb4914cae4?pvs=74)
