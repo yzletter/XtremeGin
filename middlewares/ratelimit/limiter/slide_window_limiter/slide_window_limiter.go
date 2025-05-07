@@ -1,8 +1,8 @@
 package limiter
 
 import (
+	"context"
 	_ "embed"
-	"github.com/gin-gonic/gin"
 	"github.com/redis/go-redis/v9"
 	"time"
 )
@@ -27,7 +27,7 @@ func NewRedisSlideWindowLimiter(cmd redis.Cmdable, interval time.Duration, rate 
 }
 
 // Limit 具体限流执行
-func (limiter *RedisSlideWindowLimiter) Limit(ctx *gin.Context, key string) (bool, error) {
+func (limiter *RedisSlideWindowLimiter) Limit(ctx context.Context, key string) (bool, error) {
 	// ARGV 参数
 	windowScale := limiter.interval.Milliseconds()
 	maxRate := limiter.rate
