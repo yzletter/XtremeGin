@@ -5,7 +5,7 @@ import "github.com/golang-jwt/jwt/v5"
 // RefreshClaims 长 Token 声明
 type RefreshClaims struct {
 	Uid  int64
-	SSid int64
+	SSid string
 	jwt.RegisteredClaims
 }
 

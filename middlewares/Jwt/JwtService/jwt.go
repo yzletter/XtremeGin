@@ -14,8 +14,11 @@ type JwtServiceBuilder struct {
 }
 
 // NewJwtServiceBuilder 构造函数
-func NewJwtServiceBuilder() *JwtServiceBuilder {
-	return &JwtServiceBuilder{}
+func NewJwtServiceBuilder(jwtHandler JwtHandler.JwtHandler) *JwtServiceBuilder {
+	return &JwtServiceBuilder{
+		IgnorePaths: setx.NewSet[string](),
+		JwtHandler:  jwtHandler,
+	}
 }
 
 // AddIgnorePath 添加需要忽略不进行鉴权的路径
@@ -48,7 +51,7 @@ func (jb *JwtServiceBuilder) Build() gin.HandlerFunc {
 			return
 		}
 		// 5. 判断 Token 是否废弃
-		if flag := jb.JwtHandler.CheckToken(ctx, targetAccessClaims.SSid); flag {
+		if ifDiscarded := jb.JwtHandler.CheckTokenDiscarded(ctx, targetAccessClaims.SSid); ifDiscarded {
 			return
 		}
 		// 6. 将请求的用户数据存入上下文
