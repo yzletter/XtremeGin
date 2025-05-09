@@ -1,4 +1,4 @@
-package JwtHandler
+package jwthandler
 
 import (
 	"fmt"
@@ -6,7 +6,7 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 	"github.com/redis/go-redis/v9"
-	"github.com/yzletter/XtremeGin/middlewares/Jwt/Jwtclaims"
+	"github.com/yzletter/XtremeGin/middlewares/jwt/jwtclaims"
 	"net/http"
 	"strings"
 	"time"
@@ -26,7 +26,7 @@ func NewJwtHandler(accessTokenKey, refreshTokenKey string, redisClient redis.Cmd
 	}
 }
 
-// CheckToken 判断 Token 是否被废弃
+// CheckTokenDiscarded 判断 Token 是否被废弃
 func (jh *JwtHandler) CheckTokenDiscarded(ctx *gin.Context, SSid string) bool {
 	cnt, _ := jh.RedisClient.Exists(ctx, fmt.Sprintf("users:ssid:%s", SSid)).Result()
 	if cnt > 0 {
@@ -48,7 +48,7 @@ func (jh *JwtHandler) SetLoginToken(ctx *gin.Context, uid int64) error {
 func (jh *JwtHandler) SetRefreshToken(ctx *gin.Context, uid int64, ssid string) error {
 	// todo 未进行错误处理
 	// 1. 携带信息的声明
-	myClaims := &Jwtclaims.RefreshClaims{
+	myClaims := &jwtclaims.RefreshClaims{
 		Uid:  uid,
 		SSid: ssid,
 		RegisteredClaims: jwt.RegisteredClaims{
@@ -69,7 +69,7 @@ func (jh *JwtHandler) SetRefreshToken(ctx *gin.Context, uid int64, ssid string) 
 func (jh *JwtHandler) SetAccessToken(ctx *gin.Context, uid int64, ssid string) error {
 	// todo 未进行错误处理
 	// 1. 携带信息的声明
-	myClaims := &Jwtclaims.AccessClaims{
+	myClaims := &jwtclaims.AccessClaims{
 		Uid:       uid,
 		SSid:      ssid,
 		UserAgent: ctx.Request.UserAgent(),
@@ -88,8 +88,15 @@ func (jh *JwtHandler) SetAccessToken(ctx *gin.Context, uid int64, ssid string) e
 }
 
 // ClearToken 将 token 废弃
-func (jh *JwtHandler) ClearToken() {
-
+func (jh *JwtHandler) ClearToken(ctx *gin.Context) error {
+	// 1. 设置前端请求头的长短 token 为非法值
+	ctx.Header("x-access-token", "")
+	ctx.Header("x-refresh-token", "")
+	// 2. 获取当前请求的 SSid
+	myClaims, _ := ctx.MustGet("myClaims").(*jwtclaims.AccessClaims)
+	// 3. 在 Redis 中记录当前 SSid 废弃
+	err := jh.RedisClient.Set(ctx, fmt.Sprintf("users:ssid:%s", myClaims.SSid), "", time.Hour*24*7).Err()
+	return err
 }
 
 // RefreshAccessToken 若长 token 未过期, 则刷新短 token
@@ -98,7 +105,7 @@ func (jh *JwtHandler) RefreshAccessToken(ctx *gin.Context) {
 	// 1. 取出 tokenString
 	tokenString := ExtractToken(ctx)
 	// 2. 用 refreshTokenKey 解析到声明中
-	targetClaims := &Jwtclaims.RefreshClaims{}
+	targetClaims := &jwtclaims.RefreshClaims{}
 	keyfunc := func(token *jwt.Token) (interface{}, error) {
 		return jh.RefreshTokenKey, nil
 	}
@@ -121,6 +128,6 @@ func (jh *JwtHandler) RefreshAccessToken(ctx *gin.Context) {
 func ExtractToken(ctx *gin.Context) string {
 	// todo 未进行错误处理
 	headerString := ctx.GetHeader("Authorization")
-	headerStringSegs := strings.SplitN(headerString, " ", 2)
-	return headerStringSegs[1]
+	headerStringSeg := strings.SplitN(headerString, " ", 2)
+	return headerStringSeg[1]
 }

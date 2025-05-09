@@ -1,4 +1,4 @@
-package Jwtclaims
+package jwtclaims
 
 import "github.com/golang-jwt/jwt/v5"
 

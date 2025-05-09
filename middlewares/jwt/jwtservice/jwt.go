@@ -1,20 +1,20 @@
-package JwtService
+package jwtservice
 
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/yzletter/XtremeGin/middlewares/Jwt/JwtHandler"
-	"github.com/yzletter/XtremeGin/middlewares/Jwt/Jwtclaims"
+	"github.com/yzletter/XtremeGin/middlewares/jwt/jwtclaims"
+	"github.com/yzletter/XtremeGin/middlewares/jwt/jwthandler"
 	"github.com/yzletter/go-kit/setx"
 )
 
 type JwtServiceBuilder struct {
 	IgnorePaths *setx.Set[string]
-	JwtHandler  JwtHandler.JwtHandler
+	JwtHandler  *jwthandler.JwtHandler
 }
 
 // NewJwtServiceBuilder 构造函数
-func NewJwtServiceBuilder(jwtHandler JwtHandler.JwtHandler) *JwtServiceBuilder {
+func NewJwtServiceBuilder(jwtHandler *jwthandler.JwtHandler) *JwtServiceBuilder {
 	return &JwtServiceBuilder{
 		IgnorePaths: setx.NewSet[string](),
 		JwtHandler:  jwtHandler,
@@ -39,9 +39,9 @@ func (jb *JwtServiceBuilder) Build() gin.HandlerFunc {
 			return
 		}
 		// 2. 取出 tokenString
-		tokenString := JwtHandler.ExtractToken(ctx)
+		tokenString := jwthandler.ExtractToken(ctx)
 		// 3. 将 Token 解析成 Claims
-		targetAccessClaims := &Jwtclaims.AccessClaims{}
+		targetAccessClaims := &jwtclaims.AccessClaims{}
 		keyFunc := func(token *jwt.Token) (interface{}, error) {
 			return jb.JwtHandler.AccessTokenKey, nil
 		}
@@ -55,7 +55,7 @@ func (jb *JwtServiceBuilder) Build() gin.HandlerFunc {
 			return
 		}
 		// 6. 将请求的用户数据存入上下文
-		ctx.Set("claims", targetAccessClaims)
+		ctx.Set("myClaims", targetAccessClaims)
 		// 7. 退出
 		return
 	}
