@@ -10,7 +10,7 @@ import (
 )
 
 type JwtServiceBuilder struct {
-	IgnorePaths *setx.Set[string]
+	IgnorePaths *setx.Set[string] // go-kit 工具库: github.com/yzletter/go-kit/
 	JwtHandler  *jwthandler.JwtHandler
 }
 
