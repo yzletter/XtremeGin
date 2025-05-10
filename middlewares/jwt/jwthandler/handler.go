@@ -149,5 +149,8 @@ func (jh *JwtHandler) RefreshAccessToken(ctx *gin.Context) {
 func ExtractToken(ctx *gin.Context) string {
 	headerString := ctx.GetHeader("Authorization")
 	headerStringSeg := strings.SplitN(headerString, " ", 2)
+	if len(headerStringSeg) != 2 {
+		return ""
+	}
 	return headerStringSeg[1]
 }
