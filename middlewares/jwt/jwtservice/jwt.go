@@ -6,6 +6,7 @@ import (
 	"github.com/yzletter/XtremeGin/middlewares/jwt/jwtclaims"
 	"github.com/yzletter/XtremeGin/middlewares/jwt/jwthandler"
 	"github.com/yzletter/go-kit/setx"
+	"net/http"
 )
 
 type JwtServiceBuilder struct {
@@ -29,7 +30,6 @@ func (jb *JwtServiceBuilder) AddIgnorePath(path string) *JwtServiceBuilder {
 
 // Build 返回用于 Gin 注册的 gin.HandlerFunc
 func (jb *JwtServiceBuilder) Build() gin.HandlerFunc {
-	// todo 当前函数未进行错误处理
 	var CheckRequestJWT func(ctx *gin.Context)
 
 	CheckRequestJWT = func(ctx *gin.Context) {
@@ -45,18 +45,33 @@ func (jb *JwtServiceBuilder) Build() gin.HandlerFunc {
 		keyFunc := func(token *jwt.Token) (interface{}, error) {
 			return jb.JwtHandler.AccessTokenKey, nil
 		}
-		token, _ := jwt.ParseWithClaims(tokenString, targetAccessClaims, keyFunc)
-		// 4. 判断 Token 是否正确
-		if !token.Valid {
+		token, err := jwt.ParseWithClaims(tokenString, targetAccessClaims, keyFunc)
+		// 4. 判断是否携带 token
+		if err != nil { // 未登录
+			ctx.AbortWithStatus(http.StatusUnauthorized)
 			return
 		}
-		// 5. 判断 Token 是否废弃
+		// 5. 判断 Token 是否有效, 是否为空, Uid 是否为 0
+		if !token.Valid || token == nil || targetAccessClaims.Uid == 0 {
+			ctx.AbortWithStatus(http.StatusUnauthorized)
+			return
+		}
+
+		// 6. 判断 Agent 是否一致, 若不一致存在问题
+		if targetAccessClaims.UserAgent != ctx.Request.UserAgent() {
+			// 严重的安全问题，你是要监控
+			ctx.AbortWithStatus(http.StatusUnauthorized)
+			return
+		}
+
+		// 7. 判断 Token 是否废弃
 		if ifDiscarded := jb.JwtHandler.CheckTokenDiscarded(ctx, targetAccessClaims.SSid); ifDiscarded {
+			ctx.AbortWithStatus(http.StatusUnauthorized)
 			return
 		}
-		// 6. 将请求的用户数据存入上下文
+		// 8. 将请求的用户数据存入上下文
 		ctx.Set("myClaims", targetAccessClaims)
-		// 7. 退出
+		// 9. 退出
 		return
 	}
 

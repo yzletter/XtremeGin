@@ -6,6 +6,7 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 	"github.com/redis/go-redis/v9"
+	"github.com/yzletter/XtremeGin/errs"
 	"github.com/yzletter/XtremeGin/middlewares/jwt/jwtclaims"
 	"net/http"
 	"strings"
@@ -37,16 +38,17 @@ func (jh *JwtHandler) CheckTokenDiscarded(ctx *gin.Context, SSid string) bool {
 
 // SetLoginToken 设置登录 Token, 包括长 token 和短 token
 func (jh *JwtHandler) SetLoginToken(ctx *gin.Context, uid int64) error {
-	// todo 未进行错误处理
 	ssid := uuid.New().String()
-	jh.SetRefreshToken(ctx, uid, ssid)
-	jh.SetAccessToken(ctx, uid, ssid)
-	return nil
+	err := jh.SetRefreshToken(ctx, uid, ssid)
+	if err != nil {
+		return err
+	}
+	err = jh.SetAccessToken(ctx, uid, ssid)
+	return err
 }
 
 // SetRefreshToken 设置长 token
 func (jh *JwtHandler) SetRefreshToken(ctx *gin.Context, uid int64, ssid string) error {
-	// todo 未进行错误处理
 	// 1. 携带信息的声明
 	myClaims := &jwtclaims.RefreshClaims{
 		Uid:  uid,
@@ -59,7 +61,11 @@ func (jh *JwtHandler) SetRefreshToken(ctx *gin.Context, uid int64, ssid string) 
 	// 2. 生成 Token
 	token := jwt.NewWithClaims(jwt.SigningMethodHS512, myClaims)
 	// 3. 对 Token 进行加密
-	tokenString, _ := token.SignedString(jh.RefreshTokenKey) // 用长 token 秘钥进行加密
+	tokenString, err := token.SignedString(jh.RefreshTokenKey) // 用长 token 秘钥进行加密
+	if err != nil {
+		ctx.String(http.StatusInternalServerError, "系统错误")
+		return errs.ErrSetRefreshToken
+	}
 	// 4. 将 token 放入上下文
 	ctx.Set("x-refresh-token", tokenString)
 	return nil
@@ -67,7 +73,6 @@ func (jh *JwtHandler) SetRefreshToken(ctx *gin.Context, uid int64, ssid string) 
 
 // SetAccessToken 设置短 token
 func (jh *JwtHandler) SetAccessToken(ctx *gin.Context, uid int64, ssid string) error {
-	// todo 未进行错误处理
 	// 1. 携带信息的声明
 	myClaims := &jwtclaims.AccessClaims{
 		Uid:       uid,
@@ -81,7 +86,11 @@ func (jh *JwtHandler) SetAccessToken(ctx *gin.Context, uid int64, ssid string) e
 	// 2. 生成 Token
 	token := jwt.NewWithClaims(jwt.SigningMethodHS512, myClaims)
 	// 3. 对 Token 进行加密
-	tokenString, _ := token.SignedString(jh.AccessTokenKey) // 用短 token 秘钥进行加密
+	tokenString, err := token.SignedString(jh.AccessTokenKey) // 用短 token 秘钥进行加密
+	if err != nil {
+		ctx.String(http.StatusInternalServerError, "系统错误")
+		return errs.ErrSetAccessToken
+	}
 	// 4. 将 token 放入上下文
 	ctx.Set("x-access-token", tokenString)
 	return nil
@@ -93,40 +102,51 @@ func (jh *JwtHandler) ClearToken(ctx *gin.Context) error {
 	ctx.Header("x-access-token", "")
 	ctx.Header("x-refresh-token", "")
 	// 2. 获取当前请求的 SSid
-	myClaims, _ := ctx.MustGet("myClaims").(*jwtclaims.AccessClaims)
+	myClaims := ctx.MustGet("myClaims").(*jwtclaims.AccessClaims)
 	// 3. 在 Redis 中记录当前 SSid 废弃
 	err := jh.RedisClient.Set(ctx, fmt.Sprintf("users:ssid:%s", myClaims.SSid), "", time.Hour*24*7).Err()
-	return err
+	if err != nil {
+		return errs.ErrRedisSetSSid
+	}
+	return nil
 }
 
 // RefreshAccessToken 若长 token 未过期, 则刷新短 token
 func (jh *JwtHandler) RefreshAccessToken(ctx *gin.Context) {
-	// todo 未进行错误处理
 	// 1. 取出 tokenString
 	tokenString := ExtractToken(ctx)
 	// 2. 用 refreshTokenKey 解析到声明中
 	targetClaims := &jwtclaims.RefreshClaims{}
-	keyfunc := func(token *jwt.Token) (interface{}, error) {
+	keyFunc := func(token *jwt.Token) (interface{}, error) {
 		return jh.RefreshTokenKey, nil
 	}
-	token, _ := jwt.ParseWithClaims(tokenString, targetClaims, keyfunc)
+	token, err := jwt.ParseWithClaims(tokenString, targetClaims, keyFunc)
+	if err != nil {
+		ctx.AbortWithStatus(http.StatusUnauthorized)
+		return
+	}
 	// 3. 判断 token 是否废弃
 	if ifDiscarded := jh.CheckTokenDiscarded(ctx, targetClaims.SSid); ifDiscarded {
+		ctx.AbortWithStatus(http.StatusUnauthorized)
 		return
 	}
 	// 4. 判断 token 是否正确
 	if !token.Valid {
+		ctx.AbortWithStatus(http.StatusUnauthorized)
 		return
 	}
 	// 5. 设置新的 access token
-	jh.SetAccessToken(ctx, targetClaims.Uid, targetClaims.SSid)
+	err = jh.SetAccessToken(ctx, targetClaims.Uid, targetClaims.SSid)
+	if err != nil {
+		ctx.AbortWithStatus(http.StatusUnauthorized)
+		return
+	}
 	// 6. 返回
-	ctx.String(http.StatusOK, "刷新短token成功")
+	ctx.String(http.StatusOK, "刷新 accessToken 成功")
 }
 
 // ExtractToken 从上下文取出 tokenString
 func ExtractToken(ctx *gin.Context) string {
-	// todo 未进行错误处理
 	headerString := ctx.GetHeader("Authorization")
 	headerStringSeg := strings.SplitN(headerString, " ", 2)
 	return headerStringSeg[1]
