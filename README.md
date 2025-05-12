@@ -54,8 +54,8 @@ package XtremeGin
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/redis/go-redis/v9"
-	"github.com/yzletter/XtremeGin/middlewares/Jwt/JwtHandler"
-	"github.com/yzletter/XtremeGin/middlewares/Jwt/JwtService"
+	"github.com/yzletter/XtremeGin/middlewares/jwtx"
+	"time"
 )
 
 // 快速入门 QuickStart
@@ -67,10 +67,23 @@ func main() {
 	server := gin.Default()
 
 	// JWT服务
-	refreshTokenKey := "YTsKHvuxjcQ3jGXrSXH27JvnA3XTkJ6a"
-	accessTokenKey := "YTsKHvuxjcQ3jGXrSXH27JvnA3XTkJ6T"
-	jh := JwtHandler.NewJwtHandler(accessTokenKey, refreshTokenKey, rdb)
-	jb := JwtService.NewJwtServiceBuilder(jh).
+	RefreshTokenKey := "YTsKHvuxjcQ3jGXrSXH27JvnA3XTkJ6a"
+	AccessTokenKey := "YTsKHvuxjcQ3jGXrSXH27JvnA3XTkJ6T"
+	CtxClaimsName := "myClaims"
+	IssuerName := "yzletter"
+	AccessTokenDuration := time.Hour * 24 * 7
+	RefreshTokenDuration := time.Hour * 24
+	AccessTokenHeader := "x-access-token"
+	RefreshTokenHeader := "x-refresh-token"
+	RedisKeyPrefix := "users:ssid"
+
+	jh := jwtx.
+		NewJwtHandler(AccessTokenKey, RefreshTokenKey,
+			CtxClaimsName, IssuerName, RedisKeyPrefix,
+			AccessTokenHeader, RefreshTokenHeader,
+			AccessTokenDuration, RefreshTokenDuration,
+			rdb)
+	jb := jwtx.NewJwtServiceBuilder(jh).
 		AddIgnorePath("/ping").
 		AddIgnorePath("/ping2").
 		AddIgnorePath("/ping3").
