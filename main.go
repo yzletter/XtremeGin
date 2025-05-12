@@ -3,8 +3,7 @@ package XtremeGin
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/redis/go-redis/v9"
-	"github.com/yzletter/XtremeGin/middlewares/jwtx/jwthandler"
-	"github.com/yzletter/XtremeGin/middlewares/jwtx/jwtservice"
+	"github.com/yzletter/XtremeGin/middlewares/jwtx"
 	"github.com/yzletter/XtremeGin/middlewares/ratelimitx"
 	limiter "github.com/yzletter/XtremeGin/middlewares/ratelimitx/limiter/slide_window_limiter"
 	"time"
@@ -22,10 +21,23 @@ func main() {
 	rateLimitHandlerFunc := ratelimitx.NewRateLimitBuilder(limiter.NewRedisSlideWindowLimiter(rdb, time.Minute, 10)).Build()
 
 	// JWT服务
-	refreshTokenKey := "YTsKHvuxjcQ3jGXrSXH27JvnA3XTkJ6a"
-	accessTokenKey := "YTsKHvuxjcQ3jGXrSXH27JvnA3XTkJ6T"
-	jh := jwthandler.NewJwtHandler(accessTokenKey, refreshTokenKey, rdb)
-	jb := jwtservice.NewJwtServiceBuilder(jh).
+	RefreshTokenKey := "YTsKHvuxjcQ3jGXrSXH27JvnA3XTkJ6a"
+	AccessTokenKey := "YTsKHvuxjcQ3jGXrSXH27JvnA3XTkJ6T"
+	CtxClaimsName := "myClaims"
+	IssuerName := "yzletter"
+	AccessTokenDuration := time.Hour * 24 * 7
+	RefreshTokenDuration := time.Hour * 24
+	AccessTokenHeader := "x-access-token"
+	RefreshTokenHeader := "x-refresh-token"
+	RedisKeyPrefix := "users:ssid"
+
+	jh := jwtx.
+		NewJwtHandler(AccessTokenKey, RefreshTokenKey,
+			CtxClaimsName, IssuerName, RedisKeyPrefix,
+			AccessTokenHeader, RefreshTokenHeader,
+			AccessTokenDuration, RefreshTokenDuration,
+			rdb)
+	jb := jwtx.NewJwtServiceBuilder(jh).
 		AddIgnorePath("/ping").
 		AddIgnorePath("/ping2").
 		AddIgnorePath("/ping3").

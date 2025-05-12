@@ -37,12 +37,10 @@ func (jb *JwtServiceBuilder) Build() gin.HandlerFunc {
 			return
 		}
 		// 2. 取出 tokenString
-		tokenString := ExtractToken(ctx)
+		tokenString := ExtractToken(ctx, "Authorization")
 		// 3. 将 Token 解析成 Claims
 		targetAccessClaims := &AccessClaims{}
-		keyFunc := func(token *jwt.Token) (interface{}, error) {
-			return jb.JwtHandler.AccessTokenKey, nil
-		}
+		keyFunc := MakeKeyFunc(jb.JwtHandler.AccessTokenKey)
 		token, err := jwt.ParseWithClaims(tokenString, targetAccessClaims, keyFunc)
 		// 4. 判断是否携带 token
 		if err != nil { // 未登录
@@ -54,24 +52,21 @@ func (jb *JwtServiceBuilder) Build() gin.HandlerFunc {
 			ctx.AbortWithStatus(http.StatusUnauthorized)
 			return
 		}
-
 		// 6. 判断 Agent 是否一致, 若不一致存在问题
 		if targetAccessClaims.UserAgent != ctx.Request.UserAgent() {
 			// 严重的安全问题，你是要监控
 			ctx.AbortWithStatus(http.StatusUnauthorized)
 			return
 		}
-
 		// 7. 判断 Token 是否废弃
 		if ifDiscarded := jb.JwtHandler.CheckTokenDiscarded(ctx, targetAccessClaims.SSid); ifDiscarded {
 			ctx.AbortWithStatus(http.StatusUnauthorized)
 			return
 		}
 		// 8. 将请求的用户数据存入上下文
-		ctx.Set("myClaims", targetAccessClaims)
+		ctx.Set(jb.JwtHandler.CtxClaimsName, targetAccessClaims)
 		// 9. 退出
 		return
 	}
-
 	return CheckRequestJWT
 }
