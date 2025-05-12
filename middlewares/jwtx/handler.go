@@ -1,4 +1,4 @@
-package jwthandler
+package jwtx
 
 import (
 	"fmt"
@@ -7,7 +7,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/redis/go-redis/v9"
 	"github.com/yzletter/XtremeGin/errs"
-	"github.com/yzletter/XtremeGin/middlewares/jwt/jwtclaims"
 	"net/http"
 	"strings"
 	"time"
@@ -51,7 +50,7 @@ func (jh *JwtHandler) SetLoginToken(ctx *gin.Context, uid int64) error {
 // SetRefreshToken 设置长 token
 func (jh *JwtHandler) SetRefreshToken(ctx *gin.Context, uid int64, ssid string) error {
 	// 1. 携带信息的声明
-	myClaims := &jwtclaims.RefreshClaims{
+	myClaims := &RefreshClaims{
 		Uid:  uid,
 		SSid: ssid,
 		RegisteredClaims: jwt.RegisteredClaims{
@@ -75,7 +74,7 @@ func (jh *JwtHandler) SetRefreshToken(ctx *gin.Context, uid int64, ssid string) 
 // SetAccessToken 设置短 token
 func (jh *JwtHandler) SetAccessToken(ctx *gin.Context, uid int64, ssid string) error {
 	// 1. 携带信息的声明
-	myClaims := &jwtclaims.AccessClaims{
+	myClaims := &AccessClaims{
 		Uid:       uid,
 		SSid:      ssid,
 		UserAgent: ctx.Request.UserAgent(),
@@ -103,7 +102,7 @@ func (jh *JwtHandler) ClearToken(ctx *gin.Context) error {
 	ctx.Header("x-access-token", "")
 	ctx.Header("x-refresh-token", "")
 	// 2. 获取当前请求的 SSid
-	myClaims := ctx.MustGet("myClaims").(*jwtclaims.AccessClaims)
+	myClaims := ctx.MustGet("myClaims").(*AccessClaims)
 	// 3. 在 Redis 中记录当前 SSid 废弃
 	err := jh.RedisClient.Set(ctx, fmt.Sprintf("users:ssid:%s", myClaims.SSid), "", time.Hour*24*7).Err()
 	if err != nil {
@@ -117,7 +116,7 @@ func (jh *JwtHandler) RefreshAccessToken(ctx *gin.Context) {
 	// 1. 取出 tokenString
 	tokenString := ExtractToken(ctx)
 	// 2. 用 refreshTokenKey 解析到声明中
-	targetClaims := &jwtclaims.RefreshClaims{}
+	targetClaims := &RefreshClaims{}
 	keyFunc := func(token *jwt.Token) (interface{}, error) {
 		return jh.RefreshTokenKey, nil
 	}

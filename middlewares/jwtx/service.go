@@ -1,21 +1,19 @@
-package jwtservice
+package jwtx
 
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/yzletter/XtremeGin/middlewares/jwt/jwtclaims"
-	"github.com/yzletter/XtremeGin/middlewares/jwt/jwthandler"
 	"github.com/yzletter/go-kit/setx"
 	"net/http"
 )
 
 type JwtServiceBuilder struct {
 	IgnorePaths *setx.Set[string] // go-kit 工具库: github.com/yzletter/go-kit/
-	JwtHandler  *jwthandler.JwtHandler
+	JwtHandler  *JwtHandler
 }
 
 // NewJwtServiceBuilder 构造函数
-func NewJwtServiceBuilder(jwtHandler *jwthandler.JwtHandler) *JwtServiceBuilder {
+func NewJwtServiceBuilder(jwtHandler *JwtHandler) *JwtServiceBuilder {
 	return &JwtServiceBuilder{
 		IgnorePaths: setx.NewSet[string](),
 		JwtHandler:  jwtHandler,
@@ -39,9 +37,9 @@ func (jb *JwtServiceBuilder) Build() gin.HandlerFunc {
 			return
 		}
 		// 2. 取出 tokenString
-		tokenString := jwthandler.ExtractToken(ctx)
+		tokenString := ExtractToken(ctx)
 		// 3. 将 Token 解析成 Claims
-		targetAccessClaims := &jwtclaims.AccessClaims{}
+		targetAccessClaims := &AccessClaims{}
 		keyFunc := func(token *jwt.Token) (interface{}, error) {
 			return jb.JwtHandler.AccessTokenKey, nil
 		}

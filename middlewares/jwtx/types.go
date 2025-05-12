@@ -1,6 +1,8 @@
-package jwthandler
+package jwtx
 
-import "github.com/gin-gonic/gin"
+import (
+	"github.com/gin-gonic/gin"
+)
 
 type Handler interface {
 	CheckTokenDiscarded(ctx *gin.Context, SSid string) bool

@@ -1,9 +1,9 @@
-package ratelimit
+package ratelimitx
 
 import (
 	"fmt"
 	"github.com/gin-gonic/gin"
-	"github.com/yzletter/XtremeGin/middlewares/ratelimit/limiter"
+	"github.com/yzletter/XtremeGin/middlewares/ratelimitx/limiter"
 	"net/http"
 )
 
