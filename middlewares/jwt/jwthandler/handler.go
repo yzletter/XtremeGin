@@ -19,6 +19,7 @@ type JwtHandler struct {
 	RedisClient     redis.Cmdable
 }
 
+// NewJwtHandler 构造函数
 func NewJwtHandler(accessTokenKey, refreshTokenKey string, redisClient redis.Cmdable) *JwtHandler {
 	return &JwtHandler{
 		AccessTokenKey:  []byte(accessTokenKey),
@@ -67,7 +68,7 @@ func (jh *JwtHandler) SetRefreshToken(ctx *gin.Context, uid int64, ssid string) 
 		return errs.ErrSetRefreshToken
 	}
 	// 4. 将 token 放入上下文
-	ctx.Set("x-refresh-token", tokenString)
+	ctx.Header("x-refresh-token", tokenString)
 	return nil
 }
 
@@ -92,7 +93,7 @@ func (jh *JwtHandler) SetAccessToken(ctx *gin.Context, uid int64, ssid string) e
 		return errs.ErrSetAccessToken
 	}
 	// 4. 将 token 放入上下文
-	ctx.Set("x-access-token", tokenString)
+	ctx.Header("x-access-token", tokenString)
 	return nil
 }
 
