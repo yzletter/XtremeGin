@@ -27,7 +27,8 @@ type JwtHandler struct {
 }
 
 // NewJwtHandler 构造函数
-func NewJwtHandler(config HandlerConfig, RedisClient redis.Cmdable) *JwtHandler {
+func NewJwtHandler(config *HandlerConfig, RedisClient redis.Cmdable) *JwtHandler {
+	config.init()
 	return &JwtHandler{
 		AccessTokenKey:       config.AccessTokenKey,
 		RefreshTokenKey:      config.RefreshTokenKey,

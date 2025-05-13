@@ -14,3 +14,30 @@ type HandlerConfig struct {
 	IssuerName           string        `JWT 签名人 : yzletter`
 	RedisKeyPrefix       string        `Redis Key 前缀 : users:ssid `
 }
+
+func (config *HandlerConfig) init() {
+	if config.AccessTokenDuration == 0 {
+		config.AccessTokenDuration = time.Hour * 24
+	}
+	if config.RefreshTokenDuration == 0 {
+		config.RefreshTokenDuration = time.Hour * 24 * 7
+	}
+	if config.AccessTokenHeader == "" {
+		config.AccessTokenHeader = "x-access-token"
+	}
+	if config.RefreshTokenHeader == "" {
+		config.RefreshTokenHeader = "x-refresh-token"
+	}
+	if config.AuthorizationHeader == "" {
+		config.AuthorizationHeader = "Authorization"
+	}
+	if config.CtxClaimsName == "" {
+		config.AuthorizationHeader = "myClaims"
+	}
+	if config.IssuerName == "" {
+		config.AuthorizationHeader = "yzletter"
+	}
+	if config.RedisKeyPrefix == "" {
+		config.AuthorizationHeader = "users:ssid"
+	}
+}

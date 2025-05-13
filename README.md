@@ -66,20 +66,13 @@ func main() {
 	// Gin 初始化
 	server := gin.Default()
 
-	// JWT服务
-	handlerConfig := jwtx.HandlerConfig{
-		AccessTokenKey:       []byte("YTsKHvuxjcQ3jGXrSXH27JvnA3XTkJ6a"),
-		RefreshTokenKey:      []byte("YTsKHvuxjcQ3jGXrSXH27JvnA3XTkJ6T"),
-		AccessTokenDuration:  time.Hour * 24,
-		RefreshTokenDuration: time.Hour * 24 * 7,
-		AccessTokenHeader:    "x-access-token",
-		RefreshTokenHeader:   "x-refresh-token",
-		CtxClaimsName:        "myClaims",
-		IssuerName:           "yzletter",
-		RedisKeyPrefix:       "users:ssid",
+	// JWT 服务
+	handlerConfig := &jwtx.HandlerConfig{
+		AccessTokenKey:  []byte("YTsKHvuxjcQ3jGXrSXH27JvnA3XTkJ6a"),
+		RefreshTokenKey: []byte("YTsKHvuxjcQ3jGXrSXH27JvnA3XTkJ6T"),
 	}
 
-	jwtHandlerFunc := jwtx.NewJwtServiceBuilder(jwtx.NewJwtHandler(handlerConfig, redisClient)).
+	jwtHandlerFunc := jwtx.NewJwtServiceBuilder(jwtx.NewJwtHandler(handlerConfig, redisClient), false).
 		AddIgnorePath("/ping").
 		AddIgnorePath("/ping2").
 		AddIgnorePath("/ping3").
@@ -87,7 +80,8 @@ func main() {
 		AddIgnorePath("/ping5").Build()
 
 	// 注册
-	server.Use(jwtHandlerFunc)
+	server.Use(rateLimitHandlerFunc, jwtHandlerFunc)
 }
+
 
 ```

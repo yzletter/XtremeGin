@@ -20,18 +20,10 @@ func main() {
 	// 限流服务
 	rateLimitHandlerFunc := ratelimitx.NewRateLimitBuilder(limiter.NewRedisSlideWindowLimiter(redisClient, time.Minute, 10)).Build()
 
-	// JWT服务
-	handlerConfig := jwtx.HandlerConfig{
-		AccessTokenKey:       []byte("YTsKHvuxjcQ3jGXrSXH27JvnA3XTkJ6a"),
-		RefreshTokenKey:      []byte("YTsKHvuxjcQ3jGXrSXH27JvnA3XTkJ6T"),
-		AccessTokenDuration:  time.Hour * 24,
-		RefreshTokenDuration: time.Hour * 24 * 7,
-		AccessTokenHeader:    "x-access-token",
-		RefreshTokenHeader:   "x-refresh-token",
-		AuthorizationHeader:  "Authorization",
-		CtxClaimsName:        "myClaims",
-		IssuerName:           "yzletter",
-		RedisKeyPrefix:       "users:ssid",
+	// JWT 服务
+	handlerConfig := &jwtx.HandlerConfig{
+		AccessTokenKey:  []byte("YTsKHvuxjcQ3jGXrSXH27JvnA3XTkJ6a"),
+		RefreshTokenKey: []byte("YTsKHvuxjcQ3jGXrSXH27JvnA3XTkJ6T"),
 	}
 
 	jwtHandlerFunc := jwtx.NewJwtServiceBuilder(jwtx.NewJwtHandler(handlerConfig, redisClient), false).
