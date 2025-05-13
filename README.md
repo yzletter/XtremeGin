@@ -25,20 +25,26 @@ package XtremeGin
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/redis/go-redis/v9"
-	"github.com/yzletter/XtremeGin/middlewares/ratelimit"
-	limiter "github.com/yzletter/XtremeGin/middlewares/ratelimit/limiter/slide_window_limiter"
+	"github.com/yzletter/XtremeGin/ratelimitx"
+	limiterx "github.com/yzletter/XtremeGin/ratelimitx/limiterx/slide_window_limiter"
 	"time"
 )
 
+// 快速入门 QuickStart
 func main() {
-	rdb := redis.NewClient(&redis.Options{Addr: "localhost:6379"})
+	// redis 数据库
+	redisClient := redis.NewClient(&redis.Options{Addr: "localhost:6379"})
 
-	r := gin.Default()
-	
-	rateLimitHandler := ratelimit.NewRateLimitBuilder(limiter.NewRedisSlideWindowLimiter(rdb, time.Minute, 10)).Build()
+	// Gin 初始化
+	server := gin.Default()
 
-	r.Use(rateLimitHandler)
+	// 限流服务
+	rateLimitHandlerFunc := ratelimitx.NewRateLimitBuilder(limiterx.NewRedisSlideWindowLimiter(redisClient, time.Minute, 10)).Build()
+
+	// 注册
+	server.Use(rateLimitHandlerFunc)
 }
+
 ```
 
 
@@ -54,7 +60,7 @@ package XtremeGin
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/redis/go-redis/v9"
-	"github.com/yzletter/XtremeGin/middlewares/jwtx"
+	"github.com/yzletter/XtremeGin/jwtx"
 	"time"
 )
 
@@ -68,8 +74,8 @@ func main() {
 
 	// JWT 服务
 	handlerConfig := &jwtx.HandlerConfig{
-		AccessTokenKey:  []byte("YTsKHvuxjcQ3jGXrSXH27JvnA3XTkJ6a"),
-		RefreshTokenKey: []byte("YTsKHvuxjcQ3jGXrSXH27JvnA3XTkJ6T"),
+		AccessTokenKey:  []byte("YTsKHvuxjcQ3jGXrSXH27JvnA3XTkJ6a"), // AccessToken 秘钥
+		RefreshTokenKey: []byte("YTsKHvuxjcQ3jGXrSXH27JvnA3XTkJ6T"), // RefreshToken 秘钥
 	}
 
 	jwtHandlerFunc := jwtx.NewJwtServiceBuilder(jwtx.NewJwtHandler(handlerConfig, redisClient), false).
@@ -80,7 +86,7 @@ func main() {
 		AddIgnorePath("/ping5").Build()
 
 	// 注册
-	server.Use(rateLimitHandlerFunc, jwtHandlerFunc)
+	server.Use(jwtHandlerFunc)
 }
 
 
