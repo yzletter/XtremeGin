@@ -61,35 +61,30 @@ import (
 // 快速入门 QuickStart
 func main() {
 	// redis 数据库
-	rdb := redis.NewClient(&redis.Options{Addr: "localhost:6379"})
+	redisClient := redis.NewClient(&redis.Options{Addr: "localhost:6379"})
 
 	// Gin 初始化
 	server := gin.Default()
 
 	// JWT服务
-	RefreshTokenKey := "YTsKHvuxjcQ3jGXrSXH27JvnA3XTkJ6a"
-	AccessTokenKey := "YTsKHvuxjcQ3jGXrSXH27JvnA3XTkJ6T"
-	CtxClaimsName := "myClaims"
-	IssuerName := "yzletter"
-	AccessTokenDuration := time.Hour * 24 * 7
-	RefreshTokenDuration := time.Hour * 24
-	AccessTokenHeader := "x-access-token"
-	RefreshTokenHeader := "x-refresh-token"
-	RedisKeyPrefix := "users:ssid"
+	handlerConfig := jwtx.HandlerConfig{
+		AccessTokenKey:       []byte("YTsKHvuxjcQ3jGXrSXH27JvnA3XTkJ6a"),
+		RefreshTokenKey:      []byte("YTsKHvuxjcQ3jGXrSXH27JvnA3XTkJ6T"),
+		AccessTokenDuration:  time.Hour * 24,
+		RefreshTokenDuration: time.Hour * 24 * 7,
+		AccessTokenHeader:    "x-access-token",
+		RefreshTokenHeader:   "x-refresh-token",
+		CtxClaimsName:        "myClaims",
+		IssuerName:           "yzletter",
+		RedisKeyPrefix:       "users:ssid",
+	}
 
-	jh := jwtx.
-		NewJwtHandler(AccessTokenKey, RefreshTokenKey,
-			CtxClaimsName, IssuerName, RedisKeyPrefix,
-			AccessTokenHeader, RefreshTokenHeader,
-			AccessTokenDuration, RefreshTokenDuration,
-			rdb)
-	jb := jwtx.NewJwtServiceBuilder(jh).
+	jwtHandlerFunc := jwtx.NewJwtServiceBuilder(jwtx.NewJwtHandler(handlerConfig, redisClient)).
 		AddIgnorePath("/ping").
 		AddIgnorePath("/ping2").
 		AddIgnorePath("/ping3").
 		AddIgnorePath("/ping4").
-		AddIgnorePath("/ping5")
-	jwtHandlerFunc := jb.Build()
+		AddIgnorePath("/ping5").Build()
 
 	// 注册
 	server.Use(jwtHandlerFunc)
