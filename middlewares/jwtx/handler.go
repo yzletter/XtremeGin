@@ -19,6 +19,7 @@ type JwtHandler struct {
 	RefreshTokenDuration time.Duration `RefreshToken 过期时间`
 	AccessTokenHeader    string        `AccessToken 请求头名`
 	RefreshTokenHeader   string        `RefreshToken 请求头名`
+	AuthorizationHeader  string        `认证信息请求头`
 	CtxClaimsName        string        `CTX 存储用户信息的 Claims 名 : claims`
 	IssuerName           string        `JWT 签名人 : yzletter`
 	RedisKeyPrefix       string        `Redis Key 前缀 : users:ssid `
@@ -34,6 +35,7 @@ func NewJwtHandler(config HandlerConfig, RedisClient redis.Cmdable) *JwtHandler 
 		RefreshTokenDuration: config.RefreshTokenDuration,
 		AccessTokenHeader:    config.AccessTokenHeader,
 		RefreshTokenHeader:   config.RefreshTokenHeader,
+		AuthorizationHeader:  config.AuthorizationHeader,
 		CtxClaimsName:        config.CtxClaimsName,
 		IssuerName:           config.IssuerName,
 		RedisKeyPrefix:       config.RedisKeyPrefix,
@@ -127,7 +129,7 @@ func (jh *JwtHandler) ClearToken(ctx *gin.Context) error {
 // RefreshAccessToken 若长 token 未过期, 则刷新短 token
 func (jh *JwtHandler) RefreshAccessToken(ctx *gin.Context) {
 	// 1. 取出 tokenString
-	tokenString := ExtractToken(ctx, "Authorization")
+	tokenString := ExtractToken(ctx, jh.AuthorizationHeader)
 	// 2. 用 refreshTokenKey 解析到声明中
 	targetClaims := &RefreshClaims{}
 	keyFunc := MakeKeyFunc(jh.RefreshTokenKey)
@@ -173,7 +175,7 @@ func ExtractToken(ctx *gin.Context, HeaderName string) string {
 	return headerStringSeg[1]
 }
 
-// MakeRedisKey 返回用于 Redis 查询的 Key
+// MakeRedisKey 返回拼接后用于 Redis 查询的 Key
 func MakeRedisKey(prefix, SSid string) string {
 	return fmt.Sprintf("%s:%s", prefix, SSid)
 }

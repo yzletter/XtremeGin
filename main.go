@@ -28,12 +28,13 @@ func main() {
 		RefreshTokenDuration: time.Hour * 24 * 7,
 		AccessTokenHeader:    "x-access-token",
 		RefreshTokenHeader:   "x-refresh-token",
+		AuthorizationHeader:  "Authorization",
 		CtxClaimsName:        "myClaims",
 		IssuerName:           "yzletter",
 		RedisKeyPrefix:       "users:ssid",
 	}
 
-	jwtHandlerFunc := jwtx.NewJwtServiceBuilder(jwtx.NewJwtHandler(handlerConfig, redisClient)).
+	jwtHandlerFunc := jwtx.NewJwtServiceBuilder(jwtx.NewJwtHandler(handlerConfig, redisClient), false).
 		AddIgnorePath("/ping").
 		AddIgnorePath("/ping2").
 		AddIgnorePath("/ping3").

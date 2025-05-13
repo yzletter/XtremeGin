@@ -10,14 +10,26 @@ import (
 type JwtServiceBuilder struct {
 	IgnorePaths *setx.Set[string] // go-kit 工具库: github.com/yzletter/go-kit/
 	JwtHandler  *JwtHandler
+	UseSession  bool
 }
 
 // NewJwtServiceBuilder 构造函数
-func NewJwtServiceBuilder(jwtHandler *JwtHandler) *JwtServiceBuilder {
-	return &JwtServiceBuilder{
-		IgnorePaths: setx.NewSet[string](),
-		JwtHandler:  jwtHandler,
+func NewJwtServiceBuilder(jwtHandler *JwtHandler, UseSession bool) *JwtServiceBuilder {
+	if UseSession == true {
+		// todo 启用 JWT + Session 机制
+		return &JwtServiceBuilder{
+			IgnorePaths: setx.NewSet[string](),
+			JwtHandler:  jwtHandler,
+			UseSession:  true,
+		}
+	} else {
+		return &JwtServiceBuilder{
+			IgnorePaths: setx.NewSet[string](),
+			JwtHandler:  jwtHandler,
+			UseSession:  false,
+		}
 	}
+
 }
 
 // AddIgnorePath 添加需要忽略不进行鉴权的路径
@@ -37,7 +49,7 @@ func (jb *JwtServiceBuilder) Build() gin.HandlerFunc {
 			return
 		}
 		// 2. 取出 tokenString
-		tokenString := ExtractToken(ctx, "Authorization")
+		tokenString := ExtractToken(ctx, jb.JwtHandler.AuthorizationHeader)
 		// 3. 将 Token 解析成 Claims
 		targetAccessClaims := &AccessClaims{}
 		keyFunc := MakeKeyFunc(jb.JwtHandler.AccessTokenKey)
