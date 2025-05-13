@@ -32,12 +32,12 @@ func (config *HandlerConfig) init() {
 		config.AuthorizationHeader = "Authorization"
 	}
 	if config.CtxClaimsName == "" {
-		config.AuthorizationHeader = "myClaims"
+		config.CtxClaimsName = "myClaims"
 	}
 	if config.IssuerName == "" {
-		config.AuthorizationHeader = "yzletter"
+		config.IssuerName = "yzletter"
 	}
 	if config.RedisKeyPrefix == "" {
-		config.AuthorizationHeader = "users:ssid"
+		config.RedisKeyPrefix = "users:ssid"
 	}
 }
