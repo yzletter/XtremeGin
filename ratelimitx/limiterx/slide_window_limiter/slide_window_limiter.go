@@ -1,4 +1,4 @@
-package limiter
+package limiterx
 
 import (
 	"context"

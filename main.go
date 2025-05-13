@@ -3,9 +3,9 @@ package XtremeGin
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/redis/go-redis/v9"
-	"github.com/yzletter/XtremeGin/middlewares/jwtx"
-	"github.com/yzletter/XtremeGin/middlewares/ratelimitx"
-	limiter "github.com/yzletter/XtremeGin/middlewares/ratelimitx/limiter/slide_window_limiter"
+	jwtx2 "github.com/yzletter/XtremeGin/jwtx"
+	"github.com/yzletter/XtremeGin/ratelimitx"
+	limiter "github.com/yzletter/XtremeGin/ratelimitx/limiterx/slide_window_limiter"
 	"time"
 )
 
@@ -21,12 +21,12 @@ func main() {
 	rateLimitHandlerFunc := ratelimitx.NewRateLimitBuilder(limiter.NewRedisSlideWindowLimiter(redisClient, time.Minute, 10)).Build()
 
 	// JWT 服务
-	handlerConfig := &jwtx.HandlerConfig{
-		AccessTokenKey:  []byte("YTsKHvuxjcQ3jGXrSXH27JvnA3XTkJ6a"),
-		RefreshTokenKey: []byte("YTsKHvuxjcQ3jGXrSXH27JvnA3XTkJ6T"),
+	handlerConfig := &jwtx2.HandlerConfig{
+		AccessTokenKey:  []byte("YTsKHvuxjcQ3jGXrSXH27JvnA3XTkJ6a"), // AccessToken 秘钥
+		RefreshTokenKey: []byte("YTsKHvuxjcQ3jGXrSXH27JvnA3XTkJ6T"), // RefreshToken 秘钥
 	}
 
-	jwtHandlerFunc := jwtx.NewJwtServiceBuilder(jwtx.NewJwtHandler(handlerConfig, redisClient), false).
+	jwtHandlerFunc := jwtx2.NewJwtServiceBuilder(jwtx2.NewJwtHandler(handlerConfig, redisClient), false).
 		AddIgnorePath("/ping").
 		AddIgnorePath("/ping2").
 		AddIgnorePath("/ping3").

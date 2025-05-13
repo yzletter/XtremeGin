@@ -3,18 +3,18 @@ package ratelimitx
 import (
 	"fmt"
 	"github.com/gin-gonic/gin"
-	"github.com/yzletter/XtremeGin/middlewares/ratelimitx/limiter"
+	"github.com/yzletter/XtremeGin/ratelimitx/limiterx"
 	"net/http"
 )
 
 // RateLimitBuilder 限流器
 type RateLimitBuilder struct {
-	prefix  string          // prefix 用于构造 Redis 中的 key
-	limiter limiter.Limiter // limiter 为采用的限流策略
+	prefix  string           // prefix 用于构造 Redis 中的 key
+	limiter limiterx.Limiter // limiter 为采用的限流策略
 }
 
-// NewRateLimitBuilder 构造函数, 所采用的 limiter 由外部依赖注入
-func NewRateLimitBuilder(limiter limiter.Limiter) *RateLimitBuilder {
+// NewRateLimitBuilder 构造函数, 所采用的 limiterx 由外部依赖注入
+func NewRateLimitBuilder(limiter limiterx.Limiter) *RateLimitBuilder {
 	return &RateLimitBuilder{
 		prefix:  "ip-limiter",
 		limiter: limiter,
@@ -51,7 +51,6 @@ func (builder *RateLimitBuilder) Build() gin.HandlerFunc {
 // limit 通过滑动窗口算法 lua 脚本执行限流, 若进行限流, 返回 true
 func (builder *RateLimitBuilder) limit(ctx *gin.Context) (bool, error) {
 	redisKey := fmt.Sprintf("%s:%s", builder.prefix, ctx.ClientIP()) // prefix + IP 构成 Redis 中的 key
-
 	return builder.limiter.Limit(ctx, redisKey)
 }
 

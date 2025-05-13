@@ -13,34 +13,16 @@ import (
 )
 
 type JwtHandler struct {
-	AccessTokenKey       []byte        `AccessToken 秘钥`
-	RefreshTokenKey      []byte        `RefreshToken 秘钥`
-	AccessTokenDuration  time.Duration `AccessToken 过期时间`
-	RefreshTokenDuration time.Duration `RefreshToken 过期时间`
-	AccessTokenHeader    string        `AccessToken 请求头名`
-	RefreshTokenHeader   string        `RefreshToken 请求头名`
-	AuthorizationHeader  string        `认证信息请求头`
-	CtxClaimsName        string        `CTX 存储用户信息的 Claims 名 : claims`
-	IssuerName           string        `JWT 签名人 : yzletter`
-	RedisKeyPrefix       string        `Redis Key 前缀 : users:ssid `
-	RedisClient          redis.Cmdable `Redis 缓存`
+	*HandlerConfig
+	RedisClient redis.Cmdable
 }
 
 // NewJwtHandler 构造函数
-func NewJwtHandler(config *HandlerConfig, RedisClient redis.Cmdable) *JwtHandler {
-	config.init()
+func NewJwtHandler(HandlerConfig *HandlerConfig, RedisClient redis.Cmdable) *JwtHandler {
+	HandlerConfig.init()
 	return &JwtHandler{
-		AccessTokenKey:       config.AccessTokenKey,
-		RefreshTokenKey:      config.RefreshTokenKey,
-		AccessTokenDuration:  config.AccessTokenDuration,
-		RefreshTokenDuration: config.RefreshTokenDuration,
-		AccessTokenHeader:    config.AccessTokenHeader,
-		RefreshTokenHeader:   config.RefreshTokenHeader,
-		AuthorizationHeader:  config.AuthorizationHeader,
-		CtxClaimsName:        config.CtxClaimsName,
-		IssuerName:           config.IssuerName,
-		RedisKeyPrefix:       config.RedisKeyPrefix,
-		RedisClient:          RedisClient,
+		HandlerConfig: HandlerConfig,
+		RedisClient:   RedisClient,
 	}
 }
 
